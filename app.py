@@ -20,7 +20,7 @@ def save_data():
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(st.session_state.records, f, ensure_ascii=False, indent=4)
 
-# --- ДИЗАЙН ---
+# --- ФОНОВЫЕ КАРТИНКИ ---
 def get_base64_of_bin_file(bin_file):
     with open(bin_file, 'rb') as f:
         data = f.read()
@@ -37,11 +37,32 @@ if os.path.exists("images/bg.jpg"):
         }}
     """
 
+# --- ДИЗАЙН (ПРИНУДИТЕЛЬНАЯ ТЕМНАЯ ТЕМА) ---
 st.markdown(f"""
     <style>
-    {bg_image_css}
-    .stApp {{ color: #e0e0e0; font-family: 'Segoe UI', sans-serif; }}
+    /* Сообщаем браузеру, что тема темная */
+    :root {{ color-scheme: dark; }}
     
+    /* 1. ФОН */
+    {bg_image_css}
+    
+    .stApp {{
+        background-color: #1a1c19 !important;
+        color: #e0e0e0 !important;
+        font-family: 'Segoe UI', sans-serif;
+    }}
+    
+    /* 2. ТЕКСТ (Красим в светлый, чтобы было видно на светлых ПК) */
+    p, h1, h2, h3, h4, h5, h6, span, div, label {{
+        color: #e0e0e0 !important;
+    }}
+    h1, h2, h3, h4 {{ 
+        color: #ffffff !important; 
+        text-transform: uppercase; 
+        letter-spacing: 1px; 
+    }}
+    
+    /* 3. КАРТОЧКИ (Стекло) */
     div[data-testid="stContainer"] {{
         background-color: rgba(20, 30, 20, 0.75);
         backdrop-filter: blur(10px);
@@ -51,25 +72,33 @@ st.markdown(f"""
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
     }}
     
-    h1, h2, h3, h4 {{ color: #ffffff !important; text-transform: uppercase; letter-spacing: 1px; }}
-    
-    /* Элементы ввода */
-    input, select, div[data-testid="stDateInput"] {{ 
-        background-color: rgba(0, 0, 0, 0.8) !important; 
+    /* 4. ПОЛЯ ВВОДА (Чтобы не были белыми) */
+    input, select, textarea, div[data-testid="stDateInput"] > div, div[data-testid="stTimeInput"] > div {{ 
+        background-color: #111 !important; 
         color: #00ff00 !important; 
         border: 1px solid #333 !important; 
     }}
+    /* Выпадающие списки */
+    div[data-baseweb="select"] > div {{
+        background-color: #111 !important;
+        color: #e0e0e0 !important;
+    }}
     
-    /* Скроллбар */
+    /* 5. СКРОЛЛБАР */
     ::-webkit-scrollbar {{ width: 8px; }}
     ::-webkit-scrollbar-track {{ background: #111; }}
     ::-webkit-scrollbar-thumb {{ background: #2e7d32; border-radius: 4px; }}
-    ::-webkit-scrollbar-thumb:hover {{ background: #00ff00; }}
-
+    
+    /* 6. КНОПКИ */
     div.stButton > button {{ 
         background: linear-gradient(0deg, #1b5e20, #2e7d32); 
-        color: white; 
+        color: white !important; 
         border: 1px solid #4caf50; 
+    }}
+    
+    /* 7. ЦИФРЫ СЧЕТЧИКА */
+    div[data-testid="stMetricValue"] {{
+        color: #00ff00 !important;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -87,7 +116,6 @@ with col_title:
     st.caption("ОПЕРАТИВНЫЙ МОДУЛЬ КОНТРОЛЯ")
 
 # --- СПИСОК ЦЕЛЕЙ ---
-# В поле "initial" впиши цифры, которые УЖЕ должны быть на табло (старые результаты)
 data = [
     {"id": "tank", "name": "Танк", "image": "images/tank.gif", "initial": 350},
     {"id": "sau", "name": "САУ", "image": "images/sau.gif", "initial": 120},
@@ -108,7 +136,7 @@ data = [
     {"id": "shelter", "name": "Укрытия с л/с", "image": "images/shelter.gif", "initial": 100},
 ]
 
-# ЗАГРУЗКА
+# ЗАГРУЗКА ДАННЫХ
 if 'records' not in st.session_state:
     loaded_data = load_data()
     st.session_state.records = {item['id']: [] for item in data}
@@ -120,33 +148,25 @@ def delete_record(item_id, index):
     del st.session_state.records[item_id][index]
     save_data()
 
-# --- ФУНКЦИЯ ФИЛЬТРАЦИИ ПО ДАТАМ ---
+# ФИЛЬТРАЦИЯ
 def filter_records(records, mode):
     filtered = []
     today = datetime.date.today()
-    
     for rec in records:
         try:
             rec_date = datetime.datetime.strptime(rec['date'], "%Y-%m-%d").date()
         except:
-            continue # Если дата кривая, пропускаем
-
-        if mode == "Все время":
-            filtered.append(rec)
+            continue
+        if mode == "Все время": filtered.append(rec)
         elif mode == "2025 год":
-            if rec_date.year == 2025:
-                filtered.append(rec)
+            if rec_date.year == 2025: filtered.append(rec)
         elif mode == "Этот месяц":
-            if rec_date.year == today.year and rec_date.month == today.month:
-                filtered.append(rec)
+            if rec_date.year == today.year and rec_date.month == today.month: filtered.append(rec)
         elif mode == "Последние 7 дней":
             delta = today - rec_date
-            if 0 <= delta.days <= 7:
-                filtered.append(rec)
+            if 0 <= delta.days <= 7: filtered.append(rec)
         elif mode == "Сегодня":
-            if rec_date == today:
-                filtered.append(rec)
-                
+            if rec_date == today: filtered.append(rec)
     return filtered
 
 # --- ИНТЕРФЕЙС ---
@@ -154,21 +174,15 @@ tab_list, tab_add = st.tabs(["📊 СВОДНАЯ ТАБЛИЦА", "➕ ВВОД
 
 # 1. СВОДКА
 with tab_list:
-    # Меню фильтра
     c_filter, c_void = st.columns([1, 3])
     with c_filter:
-        filter_mode = st.selectbox("📅 ПЕРИОД ОТОБРАЖЕНИЯ", 
-                                   ["Все время", "2025 год", "Этот месяц", "Последние 7 дней", "Сегодня"])
+        filter_mode = st.selectbox("📅 ПЕРИОД ОТОБРАЖЕНИЯ", ["Все время", "2025 год", "Этот месяц", "Последние 7 дней", "Сегодня"])
 
-    # Считаем общую сумму по фильтру
+    # Подсчет ИТОГО
     grand_total = 0
-    
-    # Сначала пробежимся и посчитаем всё, чтобы показать общую цифру
     for item in data:
-        # Берем начальное значение только если выбран режим "Все время"
         base = item['initial'] if filter_mode == "Все время" else 0
         recs = filter_records(st.session_state.records[item['id']], filter_mode)
-        # Суммируем количество в записях (поле 'count')
         added = sum(int(r.get('count', 1)) for r in recs)
         grand_total += base + added
     
@@ -177,19 +191,14 @@ with tab_list:
 
     st.markdown("---")
     
-    # Отрисовка карточек
     col_left, col_right = st.columns(2)
     for i, item in enumerate(data):
         current_col = col_left if i % 2 == 0 else col_right
         with current_col:
-            # Получаем все записи
             all_records = st.session_state.records[item['id']]
-            # Фильтруем их для отображения
             filtered_recs = filter_records(all_records, filter_mode)
             
-            # Считаем сумму
             base_count = item['initial'] if filter_mode == "Все время" else 0
-            # Учитываем поле 'count' (количество), если его нет - считаем как 1
             added_count = sum(int(r.get('count', 1)) for r in filtered_recs)
             total_count = base_count + added_count
             
@@ -202,43 +211,25 @@ with tab_list:
                         st.write("📷")
                 with c2:
                     st.markdown(f"#### {item['name']}")
-                    # Показываем крупно число
                     st.markdown(f"<h2 style='color: #00ff00; margin:0;'>{total_count}</h2>", unsafe_allow_html=True)
                     
                     if len(filtered_recs) > 0:
                         with st.expander(f"Детализация ({len(filtered_recs)} записей)"):
                             with st.container(height=250):
-                                # Показываем отфильтрованные записи (новые сверху)
                                 for rec in reversed(filtered_recs): 
-                                    # Чтобы найти реальный индекс для удаления, нужно поискать в оригинальном списке
-                                    # Это немного сложно, поэтому удалять лучше только в режиме "Все время"
-                                    # Или просто искать по совпадению. 
-                                    # Для простоты: кнопку удаления показываем, но предупреждаем.
-                                    
                                     qty = rec.get('count', 1)
                                     st.markdown(f"**+{qty} шт.** | 📅 {rec['date']}")
                                     st.caption(f"⏰ {rec['time']} | 📝 {rec['calc']}")
                                     
                                     loc_text = rec.get('coords', '')
                                     if not loc_text:
-                                        # Поддержка старого формата
                                         old_x = rec.get('x', '')
                                         old_y = rec.get('y', '')
                                         if old_x or old_y:
                                             loc_text = f"X:{old_x} Y:{old_y}"
-                                    
                                     if loc_text:
                                         st.text(f"📍 {loc_text}")
-                                    
                                     st.divider()
-                                
-                                if filter_mode != "Все время":
-                                    st.info("⚠️ Удаление доступно только в режиме 'Все время'")
-                                else:
-                                    # В режиме "Все время" можно удалять, так как списки совпадают (почти)
-                                    # Но для надежности лучше сделать кнопку удаления во Вводе или отдельном меню.
-                                    # Тут я оставлю упрощенный вариант просмотра.
-                                    pass
 
 # 2. ВВОД
 with tab_add:
@@ -257,18 +248,12 @@ with tab_add:
 
         with c2:
             with st.form("add_form", clear_on_submit=True):
-                # Ряд 1: Дата, Время, КОЛИЧЕСТВО
                 r1_c1, r1_c2, r1_c3 = st.columns([2, 2, 2])
-                
                 f_date = r1_c1.date_input("Дата", value=datetime.date.today(), min_value=datetime.date(2000, 1, 1))
                 f_time = r1_c2.text_input("Время", value=datetime.datetime.now().strftime("%H:%M"))
-                
-                # --- НОВОЕ ПОЛЕ: КОЛИЧЕСТВО ---
                 f_count = r1_c3.number_input("КОЛИЧЕСТВО", min_value=1, value=1, step=1)
                 
-                # Описание
                 f_calc = st.text_input("Примечание / Характер действий")
-                
                 st.markdown("---")
                 f_coords = st.text_input("Координаты / Ориентир", placeholder="Квадрат...")
                 
@@ -276,7 +261,7 @@ with tab_add:
                     st.session_state.records[selected_id].append({
                         "date": str(f_date),
                         "time": f_time,
-                        "count": f_count, # Сохраняем количество
+                        "count": f_count,
                         "calc": f_calc,
                         "coords": f_coords
                     })
@@ -284,9 +269,8 @@ with tab_add:
                     st.toast(f"Добавлено: {selected_name} (+{f_count})", icon="✅")
                     st.rerun()
 
-    # Блок удаления последних записей (для исправлений)
     st.markdown("---")
-    with st.expander("🛠️ ИСПРАВЛЕНИЕ ОШИБОК (Удаление последних записей)"):
+    with st.expander("🛠️ ИСПРАВЛЕНИЕ ОШИБОК (Удаление)"):
         recs = st.session_state.records[selected_id]
         if recs:
             st.write(f"Последние записи для: **{selected_name}**")
@@ -299,6 +283,4 @@ with tab_add:
                     if st.button("Удалить", key=f"del_last_{selected_id}_{i}"):
                         delete_record(selected_id, i)
                         st.rerun()
-                if i < len(recs) - 5: break # Показываем только 5 последних
-        else:
-            st.write("Нет записей для этого объекта.")
+                if i < len(recs) - 5: break
