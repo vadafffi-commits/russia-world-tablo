@@ -33,7 +33,7 @@ def check_captcha():
     if selection == correct:
         st.session_state.captcha_passed = True
     else:
-        st.error("Ошибка проверки. Попробуйте снова.")
+        st.error("Проверка не пройдена. Попробуйте еще раз.")
 
 def check_login():
     user = st.session_state.get("input_login", "")
@@ -49,29 +49,23 @@ def check_login():
 # 3. ЭКРАН 0: КАПЧА (ЛЕГЕНДА - УРОВЕНЬ 1)
 # ==========================================
 if not st.session_state.captcha_passed:
-    # Стиль: Уютный, чуть затемненный бежевый, широкий контейнер
     st.markdown("""
         <style>
-        .stApp { 
-            background-color: #e6e0d4; /* Кофейный оттенок */
-            color: #4a403a; 
-        }
+        .stApp { background-color: #e6e0d4; color: #4a403a; }
         #MainMenu, footer, header {visibility: hidden;}
         
-        /* КОНТЕЙНЕР (Сделал шире - 900px) */
         div[data-testid="stVerticalBlock"] > div:has(div.stForm) {
             background-color: #fdfcf8;
-            border: 2px dashed #bfa5a3; /* Эффект "строчки" */
+            border: 2px dashed #bfa5a3;
             padding: 40px;
             border-radius: 10px;
-            max-width: 900px; /* ШИРИНА */
+            max-width: 900px;
             margin: auto;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         
         h1 { color: #8e5e5e !important; font-family: 'Comic Sans MS', cursive, sans-serif; }
         
-        /* Кнопка */
         div.stButton > button {
             background-color: #bfa5a3; 
             color: white; border: none; width: 100%;
@@ -79,7 +73,6 @@ if not st.session_state.captcha_passed:
         }
         div.stButton > button:hover { background-color: #a68b89; }
         
-        /* Меню магазина (фейк) */
         .shop-nav {
             display: flex; justify-content: space-around; padding: 15px;
             background: #fff; border-bottom: 1px solid #ccc; margin-bottom: 30px;
@@ -88,7 +81,6 @@ if not st.session_state.captcha_passed:
         </style>
     """, unsafe_allow_html=True)
     
-    # Фейковое меню сверху
     st.markdown("""
         <div class="shop-nav">
             <span>🧶 Каталог пряжи</span>
@@ -99,7 +91,6 @@ if not st.session_state.captcha_passed:
         </div>
     """, unsafe_allow_html=True)
     
-    # Разметка страницы
     c_space_l, c_main, c_space_r = st.columns([1, 6, 1])
     
     with c_main:
@@ -108,7 +99,6 @@ if not st.session_state.captcha_passed:
         st.info("В связи с атаками ботов, пожалуйста, подтвердите, что вы человек. Выберите слова, связанные с **приемом пищи и отдыхом**.")
         
         with st.form("captcha_form"):
-            # Список слов
             options = [
                 "Отпуск", "Ужин", "Семнадцать", "Генератор", 
                 "Снежинка", "Отход", "Сиреневый", "Коричневый", 
@@ -117,14 +107,12 @@ if not st.session_state.captcha_passed:
                 "Наказание", "Отдых"
             ]
             
-            # Мультиселект
             st.multiselect("Выберите нужные слова:", options, key="captcha_select")
             st.markdown("<br>", unsafe_allow_html=True)
             st.form_submit_button("✅ ПОДТВЕРДИТЬ", on_click=check_captcha)
             
         st.caption("Система защиты 'Handmade-Guard'. Мы заботимся о безопасности ваших заказов.")
         
-        # Декорации снизу
         cols = st.columns(4)
         cols[0].markdown("📦 **Быстрая доставка**")
         cols[1].markdown("💳 **Оплата картой**")
@@ -142,53 +130,92 @@ if not st.session_state.authenticated:
         .stApp { background-color: #e6e0d4; color: #4a403a; }
         #MainMenu, footer, header {visibility: hidden;}
         
+        /* Широкий контейнер входа */
         div[data-testid="stVerticalBlock"] > div:has(div.stForm) {
-            background-color: #fdfcf8; padding: 50px; border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-            max-width: 800px; /* ШИРИНА */
+            background-color: #fff; 
+            padding: 0px; 
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            max-width: 900px; /* ШИРИНА */
             margin: auto;
-            border-top: 5px solid #bfa5a3;
+            border: 1px solid #e6d0ce;
+            overflow: hidden; /* Чтобы картинка не вылезала */
         }
-        h1 { color: #8e5e5e !important; font-family: 'Georgia', serif; }
         
-        div.stButton > button { background-color: #8e5e5e; color: white; border: none; width: 100%; height: 50px; font-size: 18px; }
+        h1 { color: #c71585 !important; font-family: 'Verdana', sans-serif; font-size: 32px !important; margin-bottom: 20px;}
+        
+        /* Яркая кнопка входа */
+        div.stButton > button { 
+            background-color: #c71585 !important; /* Насыщенный розовый */
+            color: white !important; 
+            border: none; 
+            width: 100%; 
+            height: 60px; /* Высокая кнопка */
+            font-size: 20px !important; 
+            font-weight: bold;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        div.stButton > button:hover { background-color: #a0106a !important; }
+        
+        /* Стиль для левой колонки (баннера) */
+        .login-banner {
+            background-color: #fae1dd;
+            height: 100%;
+            padding: 40px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #8a4a4a;
+        }
         </style>
     """, unsafe_allow_html=True)
 
-    # Фейковое меню сверху
+    # Меню
     st.markdown("""
-        <div style="text-align:center; padding: 20px; font-family: Arial; color: #666;">
-            Главная > Личный кабинет > Вход
+        <div style="text-align:center; padding: 20px; font-family: Arial; color: #666; margin-bottom: 20px;">
+            Главная &nbsp; > &nbsp; Личный кабинет &nbsp; > &nbsp; <b>Авторизация</b>
         </div>
     """, unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns([1, 4, 1])
-    with c2:
-        col_img, col_login = st.columns([1, 2])
+    # Используем форму как контейнер
+    with st.form("login_form"):
+        # Создаем колонки ВНУТРИ формы для красивой верстки
+        c_banner, c_input = st.columns([2, 3])
         
-        # Левая колонка - баннер
-        with col_img:
+        with c_banner:
             st.markdown("""
-                <div style="background-color: #f0e6e6; padding: 20px; border-radius: 10px; text-align: center; height: 100%;">
-                    <h3>🎉 SALE</h3>
-                    <p>Скидка 20% на мериносовую шерсть!</p>
-                    <div style="font-size: 50px;">🧶</div>
-                    <small>Промокод: WINTER24</small>
+                <div class="login-banner">
+                    <div style="font-size: 60px;">🧵</div>
+                    <h2>С возвращением!</h2>
+                    <p>Новые поступления шерсти мериноса уже на складе.</p>
+                    <br>
+                    <p style="font-size: 12px;">Скидка 15% на первый заказ в приложении</p>
                 </div>
             """, unsafe_allow_html=True)
-
-        # Правая колонка - вход
-        with col_login:
-            st.title("Вход в аккаунт")
             
-            with st.form("login_form"):
-                st.text_input("E-mail или телефон", key="input_login")
-                st.text_input("Пароль", type="password", key="input_password")
-                st.checkbox("Запомнить меня на этом устройстве")
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.form_submit_button("ВОЙТИ", on_click=check_login)
+        with c_input:
+            st.markdown("<div style='padding: 30px;'>", unsafe_allow_html=True)
+            st.title("Вход в кабинет")
             
-            st.markdown("<div style='text-align:center; margin-top:10px;'><a href='#' style='color:#8e5e5e;'>Забыли пароль?</a></div>", unsafe_allow_html=True)
+            st.text_input("E-mail или телефон", key="input_login", placeholder="ivanova@example.com")
+            st.text_input("Пароль", type="password", key="input_password")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Галочки
+            st.checkbox("Запомнить меня")
+            st.checkbox("Соглашаюсь на подписку журнала по рукоделию 'Шустрая спица'", value=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Кнопка (она автоматически привязывается к форме)
+            st.form_submit_button("ВОЙТИ В АККАУНТ", on_click=check_login)
+            
+            st.markdown("<div style='text-align:center; margin-top:15px;'><a href='#' style='color:#c71585; text-decoration: none;'>Забыли пароль?</a></div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
 
@@ -243,6 +270,7 @@ st.markdown(f"""
         border-radius: 4px;
         font-size: 14px;
         width: 100%;
+        height: auto;
     }}
     div[data-testid="stMetricValue"] {{ color: #00ff00 !important; }}
     </style>
