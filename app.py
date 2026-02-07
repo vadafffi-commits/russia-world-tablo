@@ -51,14 +51,10 @@ def check_login():
 if not st.session_state.captcha_passed:
     st.markdown("""
         <style>
-        /* Принудительно красим ВСЕ тексты в темный цвет */
-        .stApp, p, label, div, span, h1, h2, h3, h4 {
-            color: #4a403a !important;
-        }
-        .stApp { background-color: #e6e0d4; }
-        
+        .stApp { background-color: #e6e0d4; color: #4a403a; }
         #MainMenu, footer, header {visibility: hidden;}
         
+        /* Стили для контейнера капчи */
         div[data-testid="stVerticalBlock"] > div:has(div.stForm) {
             background-color: #fdfcf8;
             border: 2px dashed #bfa5a3;
@@ -69,6 +65,15 @@ if not st.session_state.captcha_passed:
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         
+        /* Принудительно красим текст в капче в темный */
+        div[data-testid="stVerticalBlock"] p, 
+        div[data-testid="stVerticalBlock"] label,
+        div[data-testid="stVerticalBlock"] span,
+        div[data-testid="stVerticalBlock"] h1,
+        div[data-testid="stVerticalBlock"] h3 {
+            color: #4a403a !important;
+        }
+
         h1 { color: #8e5e5e !important; font-family: 'Comic Sans MS', cursive, sans-serif; }
         
         div.stButton > button {
@@ -77,6 +82,13 @@ if not st.session_state.captcha_passed:
             border-radius: 8px; font-size: 18px; padding: 10px;
         }
         div.stButton > button:hover { background-color: #a68b89; }
+        
+        /* Поля выбора (мультиселект) светлые */
+        div[data-baseweb="select"] > div {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            border: 1px solid #ccc;
+        }
         
         .shop-nav {
             display: flex; justify-content: space-around; padding: 15px;
@@ -132,16 +144,12 @@ if not st.session_state.captcha_passed:
 if not st.session_state.authenticated:
     st.markdown("""
         <style>
-        /* ПРИНУДИТЕЛЬНО ЧЕРНЫЙ ТЕКСТ ДЛЯ ВСЕХ ЭЛЕМЕНТОВ НА ЭТОМ ЭКРАНЕ */
-        p, label, span, div, h1, h2, h3, input, div[data-testid="stCheckbox"] p {
-            color: #333333 !important;
-        }
-        
         .stApp { background-color: #e6e0d4; }
         #MainMenu, footer, header {visibility: hidden;}
         
+        /* Широкий контейнер входа */
         div[data-testid="stVerticalBlock"] > div:has(div.stForm) {
-            background-color: #fff; 
+            background-color: #ffffff; 
             padding: 0px; 
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
@@ -153,26 +161,38 @@ if not st.session_state.authenticated:
         
         h1 { color: #c71585 !important; font-family: 'Verdana', sans-serif; font-size: 32px !important; margin-bottom: 20px;}
         
+        /* !ВАЖНО! Принудительно красим ВЕСЬ текст внутри формы в черный/серый */
+        div[data-testid="stForm"] p, 
+        div[data-testid="stForm"] label, 
+        div[data-testid="stForm"] div,
+        div[data-testid="stForm"] span {
+            color: #333333 !important;
+        }
+        
+        /* Но текст внутри кнопки оставляем белым */
+        div.stButton > button p {
+            color: #ffffff !important;
+        }
+        
+        /* Кнопка */
         div.stButton > button { 
             background-color: #c71585 !important; 
-            color: white !important; 
             border: none; 
             width: 100%; 
             height: 60px;
-            font-size: 20px !important; 
-            font-weight: bold;
             border-radius: 8px;
             margin-top: 10px;
         }
         div.stButton > button:hover { background-color: #a0106a !important; }
         
-        /* Поля ввода */
+        /* Поля ввода: делаем их светлыми с черным текстом */
         input {
-            background-color: #fff !important;
-            color: #000 !important;
+            background-color: #f0f2f6 !important;
+            color: #000000 !important;
             border: 1px solid #ccc !important;
         }
         
+        /* Баннер слева */
         .login-banner {
             background-color: #fae1dd;
             height: 100%;
@@ -182,12 +202,15 @@ if not st.session_state.authenticated:
             flex-direction: column;
             justify-content: center;
             align-items: center;
+        }
+        /* Текст внутри баннера (принудительно темный) */
+        .login-banner h3, .login-banner p, .login-banner div {
             color: #8a4a4a !important;
         }
-        .login-banner p, .login-banner h3 { color: #8a4a4a !important; }
         </style>
     """, unsafe_allow_html=True)
 
+    # Меню сверху
     st.markdown("""
         <div style="text-align:center; padding: 20px; font-family: Arial; color: #666 !important; margin-bottom: 20px;">
             Главная &nbsp; > &nbsp; Личный кабинет &nbsp; > &nbsp; <b>Авторизация</b>
@@ -217,7 +240,7 @@ if not st.session_state.authenticated:
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Галочки (теперь будут видны)
+            # Галочки (текст будет черным благодаря CSS выше)
             st.checkbox("Запомнить меня")
             st.checkbox("Соглашаюсь на подписку журнала по рукоделию 'Шустрая спица'", value=True)
             
