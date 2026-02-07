@@ -7,7 +7,7 @@ import json
 # ==========================================
 # 1. ГЛОБАЛЬНЫЕ НАСТРОЙКИ
 # ==========================================
-st.set_page_config(page_title="Онлайн-магазин 'Уютное Хобби'", page_icon="🧶", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Магазин 'Уютное Хобби'", page_icon="🧶", layout="wide", initial_sidebar_state="collapsed")
 
 # 🔐 ДОСТУПЫ
 CREDENTIALS = {
@@ -36,6 +36,14 @@ def check_captcha():
         st.error("Проверка не пройдена. Попробуйте еще раз.")
 
 def check_login():
+    # 1. Сначала проверяем галочку подписки
+    is_subscribed = st.session_state.get("subscribe_check", False)
+    
+    if not is_subscribed:
+        st.error("Для входа необходимо согласие на подписку журнала 'Шустрая спица'!")
+        return # Останавливаем функцию, дальше не идем
+
+    # 2. Если галочка стоит, проверяем пароль
     user = st.session_state.get("input_login", "")
     pwd = st.session_state.get("input_password", "")
     
@@ -210,7 +218,6 @@ if not st.session_state.authenticated:
         </style>
     """, unsafe_allow_html=True)
 
-    # Меню сверху
     st.markdown("""
         <div style="text-align:center; padding: 20px; font-family: Arial; color: #666 !important; margin-bottom: 20px;">
             Главная &nbsp; > &nbsp; Личный кабинет &nbsp; > &nbsp; <b>Авторизация</b>
@@ -240,9 +247,11 @@ if not st.session_state.authenticated:
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Галочки (текст будет черным благодаря CSS выше)
+            # Галочки
             st.checkbox("Запомнить меня")
-            st.checkbox("Соглашаюсь на подписку журнала по рукоделию 'Шустрая спица'", value=True)
+            
+            # ВАЖНО: Добавил ключ key="subscribe_check" для проверки
+            st.checkbox("Соглашаюсь на подписку журнала по рукоделию 'Шустрая спица'", value=False, key="subscribe_check")
             
             st.markdown("<br>", unsafe_allow_html=True)
             
