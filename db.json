@@ -15,6 +15,14 @@
             "time": "10:21",
             "calc": "Расчет Лис, Танк в районе населенного пункта Родинское",
             "coords": "5355555 7374666"
+        },
+        {
+            "date": "2026-02-07",
+            "time": "16:10",
+            "count": 1,
+            "calc": "Удар FPV",
+            "coords": "7374555",
+            "video_link": "https://disk.yandex.ru/i/fY4qwqF2ijZqFA"
         }
     ],
     "sau": [
@@ -29,7 +37,16 @@
             "lon": 37.25480262321191
         }
     ],
-    "art_gun": [],
+    "art_gun": [
+        {
+            "date": "2025-01-09",
+            "time": "16:05",
+            "count": 1,
+            "calc": "Расчет ЛИС",
+            "coords": "5354666 7373555",
+            "video_link": "https://disk.yandex.ru/i/fY4qwqF2ijZqFA"
+        }
+    ],
     "btr": [],
     "bmp": [],
     "bbm": [],
