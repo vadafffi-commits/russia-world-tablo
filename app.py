@@ -7,23 +7,19 @@ import json
 # --- 1. НАСТРОЙКИ ---
 st.set_page_config(page_title="Онлайн-табло Русского мира", layout="wide", initial_sidebar_state="collapsed")
 
-# ПАРОЛЬ АДМИНИСТРАТОРА (Поменяй на свой сложный)
-ADMIN_PASSWORD = "12345"
+# ==========================================
+# 🔐 НАСТРОЙКИ ДОСТУПА (ЛОГИНЫ И ПАРОЛИ)
+# ==========================================
+# Формат: "логин": "пароль"
+CREDENTIALS = {
+    "user": "123",    # <--- Доступ только для просмотра
+    "admin": "admin"  # <--- Полный доступ (Командир)
+}
+# ==========================================
 
 DB_FILE = "db.json"
 
-# --- БАЗА ДАННЫХ ---
-def load_data():
-    if os.path.exists(DB_FILE):
-        with open(DB_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
-
-def save_data():
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(st.session_state.records, f, ensure_ascii=False, indent=4)
-
-# --- ФОН И СТИЛЬ ---
+# --- СТИЛЬ И ФОН ---
 def get_base64_of_bin_file(bin_file):
     with open(bin_file, 'rb') as f:
         data = f.read()
@@ -34,7 +30,7 @@ if os.path.exists("images/bg.jpg"):
     bin_str = get_base64_of_bin_file("images/bg.jpg")
     bg_image_css = f"""
         .stApp {{
-            background-image: linear_gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url("data:image/jpg;base64,{bin_str}");
+            background-image: linear_gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.95)), url("data:image/jpg;base64,{bin_str}");
             background-size: cover;
             background-attachment: fixed;
         }}
@@ -47,9 +43,12 @@ st.markdown(f"""
     
     .stApp {{ background-color: #1a1c19 !important; color: #e0e0e0 !important; font-family: 'Segoe UI', sans-serif; }}
     
-    p, h1, h2, h3, h4, h5, h6, span, div, label {{ color: #e0e0e0 !important; }}
-    h1, h2, h3, h4 {{ color: #ffffff !important; text-transform: uppercase; letter-spacing: 1px; }}
+    /* Скрытие меню Streamlit */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
     
+    /* Контейнеры */
     div[data-testid="stContainer"] {{
         background-color: rgba(20, 30, 20, 0.75);
         backdrop-filter: blur(10px);
@@ -59,55 +58,67 @@ st.markdown(f"""
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
     }}
     
-    input, select, textarea, div[data-testid="stDateInput"] > div, div[data-testid="stTimeInput"] > div {{ 
+    h1, h2, h3, h4 {{ color: #ffffff !important; text-transform: uppercase; letter-spacing: 1px; }}
+    
+    input, select {{ 
         background-color: #111 !important; color: #00ff00 !important; border: 1px solid #333 !important; 
     }}
-    div[data-baseweb="select"] > div {{ background-color: #111 !important; color: #e0e0e0 !important; }}
-    
-    ::-webkit-scrollbar {{ width: 8px; }}
-    ::-webkit-scrollbar-track {{ background: #111; }}
-    ::-webkit-scrollbar-thumb {{ background: #2e7d32; border-radius: 4px; }}
     
     div.stButton > button {{ 
         background: linear-gradient(0deg, #1b5e20, #2e7d32); 
         color: white !important; 
         border: 1px solid #4caf50; 
+        width: 100%;
     }}
-    div[data-testid="stMetricValue"] {{ color: #00ff00 !important; }}
-    
-    /* Скрываем кнопку "Deploy" от Streamlit чтобы не мешала */
-    .stDeployButton {{display:none;}}
     </style>
     """, unsafe_allow_html=True)
 
-# --- ЛОГИКА АВТОРИЗАЦИИ ---
-if 'is_admin' not in st.session_state:
-    st.session_state.is_admin = False
+# ==========================================
+# 🚪 СИСТЕМА ВХОДА (LOGIN GATEKEEPER)
+# ==========================================
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'user_role' not in st.session_state:
+    st.session_state.user_role = None
 
-with st.sidebar:
-    st.header("🔐 ДОСТУП")
-    if not st.session_state.is_admin:
-        pwd = st.text_input("Пароль администратора", type="password")
-        if pwd == ADMIN_PASSWORD:
-            st.session_state.is_admin = True
-            st.rerun()
+def check_login():
+    user = st.session_state["input_user"]
+    pwd = st.session_state["input_pwd"]
+    
+    if user in CREDENTIALS and CREDENTIALS[user] == pwd:
+        st.session_state.authenticated = True
+        st.session_state.user_role = "admin" if user == "admin" else "viewer"
     else:
-        st.success("РЕЖИМ КОМАНДИРА")
-        if st.button("ВЫЙТИ"):
-            st.session_state.is_admin = False
-            st.rerun()
+        st.error("⛔ ОШИБКА ДОСТУПА: Неверный логин или пароль")
 
-# --- ШАПКА ---
-col_logo, col_title, col_stat = st.columns([1, 5, 2])
-with col_logo:
-    if os.path.exists("images/logo.png"):
-        st.image("images/logo.png", width=100)
-    else:
-        st.markdown("<h1>🛡️</h1>", unsafe_allow_html=True)
+if not st.session_state.authenticated:
+    # ЭКРАН ВХОДА
+    c1, c2, c3 = st.columns([1, 1, 1])
+    with c2:
+        st.markdown("<br><br><br>", unsafe_allow_html=True)
+        with st.container():
+            if os.path.exists("images/logo.png"):
+                st.image("images/logo.png", width=100)
+            st.title("ВХОД В СИСТЕМУ")
+            st.text_input("Позывной (Логин)", key="input_user")
+            st.text_input("Ключ (Пароль)", type="password", key="input_pwd")
+            st.button("ВОЙТИ", on_click=check_login)
+    st.stop() # ОСТАНАВЛИВАЕТ ЗАГРУЗКУ САЙТА, ПОКА НЕ БУДЕТ ВХОДА
 
-with col_title:
-    st.title("ОНЛАЙН-ТАБЛО РУССКОГО МИРА")
-    st.caption("ОПЕРАТИВНЫЙ МОДУЛЬ КОНТРОЛЯ")
+# ==========================================
+# 🚀 ОСНОВНОЕ ПРИЛОЖЕНИЕ (ЗАГРУЖАЕТСЯ ТОЛЬКО ПОСЛЕ ВХОДА)
+# ==========================================
+
+# --- БАЗА ДАННЫХ ---
+def load_data():
+    if os.path.exists(DB_FILE):
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def save_data():
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(st.session_state.records, f, ensure_ascii=False, indent=4)
 
 # --- СПИСОК ЦЕЛЕЙ ---
 data = [
@@ -162,24 +173,43 @@ def filter_records(records, mode):
             if rec_date == today: filtered.append(rec)
     return filtered
 
-# --- ОСНОВНАЯ ЛОГИКА ВКЛАДОК ---
+# --- ШАПКА ПРИЛОЖЕНИЯ ---
+col_logo, col_title, col_stat = st.columns([1, 5, 2])
+with col_logo:
+    if os.path.exists("images/logo.png"):
+        st.image("images/logo.png", width=100)
+    else:
+        st.markdown("<h1>🛡️</h1>", unsafe_allow_html=True)
 
-# Если Админ - показываем 2 вкладки, иначе только одну
-if st.session_state.is_admin:
+with col_title:
+    role_text = "КОМАНДИР" if st.session_state.user_role == "admin" else "НАБЛЮДАТЕЛЬ"
+    st.title("ОНЛАЙН-ТАБЛО РУССКОГО МИРА")
+    st.caption(f"РЕЖИМ ДОСТУПА: {role_text}")
+
+# Кнопка выхода
+with st.sidebar:
+    st.write(f"Пользователь: **{role_text}**")
+    if st.button("ВЫЙТИ ИЗ СИСТЕМЫ"):
+        st.session_state.authenticated = False
+        st.session_state.user_role = None
+        st.rerun()
+
+# --- ЛОГИКА ВКЛАДОК ---
+# Если Админ - показываем 2 вкладки, иначе только сводку
+if st.session_state.user_role == "admin":
     tab_list, tab_add = st.tabs(["📊 СВОДНАЯ ТАБЛИЦА", "➕ ВВОД ДАННЫХ"])
 else:
-    # Хак, чтобы показать только одну вкладку без переключения
-    tab_list = st.container()
-    tab_add = None # Вкладка ввода недоступна
+    tab_list = st.container() # Просто контейнер, без вкладок
+    tab_add = None
 
-# 1. СВОДКА (Доступна всем)
+# 1. СВОДКА
 with tab_list:
     # Фильтры
     c_filter, c_void = st.columns([1, 3])
     with c_filter:
         filter_mode = st.selectbox("📅 ПЕРИОД", ["Все время", "2025 год", "Этот месяц", "Последние 7 дней", "Сегодня"])
 
-    # Подсчет ИТОГО
+    # Итого
     grand_total = 0
     for item in data:
         base = item['initial'] if filter_mode == "Все время" else 0
@@ -223,7 +253,6 @@ with tab_list:
                                     st.markdown(f"**+{qty} шт.** | 📅 {rec['date']}")
                                     st.caption(f"⏰ {rec['time']} | 📝 {rec['calc']}")
                                     
-                                    # Координаты
                                     loc_text = rec.get('coords', '')
                                     if not loc_text:
                                         if rec.get('x') or rec.get('y'):
@@ -231,18 +260,14 @@ with tab_list:
                                     if loc_text:
                                         st.text(f"📍 {loc_text}")
                                     
-                                    # --- КНОПКА ВИДЕО ---
+                                    # Видео
                                     vid_link = rec.get('video_link', '')
                                     if vid_link:
                                         st.markdown(f"[🎥 **СМОТРЕТЬ ВИДЕО (ОК)**]({vid_link})")
 
                                     # Кнопка удаления ТОЛЬКО ДЛЯ АДМИНА
-                                    if st.session_state.is_admin:
-                                        # Ищем реальный индекс (так как работаем с отфильтрованным списком)
-                                        # Это упрощенный вариант, удаляет из отображения
+                                    if st.session_state.user_role == "admin":
                                         if st.button("УДАЛИТЬ", key=f"del_{item['id']}_{rec['time']}_{rec['date']}"):
-                                            # Сложная логика поиска для удаления по значению, так как индексы сдвинуты
-                                            # Для простоты в этом примере удаляем по совпадению
                                             try:
                                                 st.session_state.records[item['id']].remove(rec)
                                                 save_data()
@@ -251,10 +276,10 @@ with tab_list:
                                                 pass
                                     st.divider()
 
-# 2. ВВОД (Только для админа)
-if st.session_state.is_admin and tab_add:
+# 2. ВВОД (Только админ)
+if st.session_state.user_role == "admin" and tab_add:
     with tab_add:
-        st.subheader("РЕГИСТРАЦИЯ ЦЕЛИ (РЕЖИМ КОМАНДИРА)")
+        st.subheader("РЕГИСТРАЦИЯ ЦЕЛИ")
         
         with st.container():
             options = {item["name"]: item["id"] for item in data}
@@ -276,9 +301,7 @@ if st.session_state.is_admin and tab_add:
                     
                     f_calc = st.text_input("Примечание / Характер действий")
                     f_coords = st.text_input("Координаты / Ориентир")
-                    
-                    # --- ПОЛЕ ДЛЯ ВИДЕО ---
-                    f_video = st.text_input("Ссылка на видео (Telegram / YouTube / Диск)")
+                    f_video = st.text_input("Ссылка на видео")
                     
                     if st.form_submit_button("ВНЕСТИ РЕЗУЛЬТАТ"):
                         st.session_state.records[selected_id].append({
@@ -287,7 +310,7 @@ if st.session_state.is_admin and tab_add:
                             "count": f_count,
                             "calc": f_calc,
                             "coords": f_coords,
-                            "video_link": f_video # Сохраняем ссылку
+                            "video_link": f_video
                         })
                         save_data()
                         st.toast(f"Добавлено: {selected_name}", icon="✅")
