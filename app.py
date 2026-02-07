@@ -4,22 +4,145 @@ import os
 import base64
 import json
 
-# --- 1. НАСТРОЙКИ ---
-st.set_page_config(page_title="Онлайн-табло Русского мира", layout="wide", initial_sidebar_state="collapsed")
+# ==========================================
+# 1. ГЛОБАЛЬНЫЕ НАСТРОЙКИ
+# ==========================================
+st.set_page_config(page_title="Магазин 'Уютное Хобби'", page_icon="🧶", layout="wide", initial_sidebar_state="collapsed")
 
-# ==========================================
-# 🔐 НАСТРОЙКИ ДОСТУПА (ЛОГИНЫ И ПАРОЛИ)
-# ==========================================
-# Формат: "логин": "пароль"
+# 🔐 ДОСТУПЫ
 CREDENTIALS = {
-    "user": "123",    # <--- Доступ только для просмотра
-    "admin": "admin"  # <--- Полный доступ (Командир)
+    "user": "123",    # Наблюдатель
+    "admin": "admin"  # Командир
 }
-# ==========================================
-
 DB_FILE = "db.json"
 
-# --- СТИЛЬ И ФОН ---
+# Инициализация сессии
+if 'captcha_passed' not in st.session_state:
+    st.session_state.captcha_passed = False
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'user_role' not in st.session_state:
+    st.session_state.user_role = None
+
+# ==========================================
+# 2. ФУНКЦИИ ПРОВЕРКИ
+# ==========================================
+def check_captcha():
+    selection = set(st.session_state.get("captcha_select", []))
+    
+    # ❗ СЕКРЕТНЫЙ КЛЮЧ (ПРАВИЛЬНЫЕ СЛОВА)
+    correct = {"Отпуск", "Отход", "Обед", "Отдых"} 
+    
+    if selection == correct:
+        st.session_state.captcha_passed = True
+    else:
+        st.error("Проверка не пройдена. Попробуйте еще раз.")
+
+def check_login():
+    user = st.session_state.get("input_login", "")
+    pwd = st.session_state.get("input_password", "")
+    
+    if user in CREDENTIALS and CREDENTIALS[user] == pwd:
+        st.session_state.authenticated = True
+        st.session_state.user_role = "admin" if user == "admin" else "viewer"
+    else:
+        st.error("Ошибка: Неверный E-mail или пароль")
+
+# ==========================================
+# 3. ЭКРАН 0: КАПЧА (ЛЕГЕНДА - УРОВЕНЬ 1)
+# ==========================================
+if not st.session_state.captcha_passed:
+    # Нежный стиль для магазина рукоделия
+    st.markdown("""
+        <style>
+        .stApp { 
+            background-color: #fffbf0; /* Кремовый фон */
+            color: #5a4a42; 
+        }
+        #MainMenu, footer, header {visibility: hidden;}
+        
+        div[data-testid="stVerticalBlock"] > div:has(div.stForm) {
+            background-color: white;
+            border: 1px solid #e6d0ce;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 600px;
+            margin: auto;
+            box-shadow: 0 4px 15px rgba(216, 112, 147, 0.1);
+        }
+        h1 { color: #d87093 !important; font-family: 'Comic Sans MS', cursive, sans-serif; }
+        
+        div.stButton > button {
+            background-color: #d87093; /* Розовый */
+            color: white; border: none; width: 100%;
+            border-radius: 20px;
+            font-size: 18px;
+        }
+        div.stButton > button:hover { background-color: #c71585; }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.title("🧶 Уютное Хобби")
+        st.markdown("##### Подтверждение личности")
+        st.info("Чтобы исключить автоматические заказы, выберите из списка слова, связанные с **перерывом в работе**.")
+        
+        with st.form("captcha_form"):
+            options = [
+                "Отпуск", "Ужин", "Семнадцать", "Генератор", 
+                "Снежинка", "Отход", "Сиреневый", "Коричневый", 
+                "Берет", "Корзина", "Картина", "Обед", 
+                "Картонка", "Топор", "Квартира", "Преступление", 
+                "Наказание", "Отдых"
+            ]
+            
+            st.multiselect("Выберите слова:", options, key="captcha_select")
+            st.form_submit_button("Я НЕ РОБОТ", on_click=check_captcha)
+            
+        st.caption("Anti-Bot System v4.1 | Мир вышивки и вязания")
+    
+    st.stop() 
+
+# ==========================================
+# 4. ЭКРАН 1: МАГАЗИН ВХОД (ЛЕГЕНДА - УРОВЕНЬ 2)
+# ==========================================
+if not st.session_state.authenticated:
+    st.markdown("""
+        <style>
+        .stApp { background-color: #fffbf0; color: #5a4a42; }
+        #MainMenu, footer, header {visibility: hidden;}
+        div[data-testid="stVerticalBlock"] > div:has(div.stForm) {
+            background-color: white; padding: 40px; border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 500px; margin: auto;
+            border: 1px solid #e6d0ce;
+        }
+        h1 { color: #d87093 !important; font-family: 'Comic Sans MS', sans-serif; font-size: 28px !important;}
+        div.stButton > button { background-color: #d87093; color: white; border: none; width: 100%; border-radius: 20px; }
+        </style>
+    """, unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.title("🌸 Личный кабинет")
+        
+        with st.form("login_form"):
+            st.text_input("E-mail покупателя", key="input_login", placeholder="anna@mail.ru")
+            st.text_input("Пароль", type="password", key="input_password")
+            st.checkbox("Запомнить меня")
+            st.form_submit_button("ВОЙТИ", on_click=check_login)
+            
+        st.caption("Забыли пароль? | Регистрация")
+        st.markdown("<div style='text-align:center; color:#aaa; margin-top:50px;'>© 2024 Магазин 'Уютное Хобби'<br>Пряжа, спицы, мулине</div>", unsafe_allow_html=True)
+    st.stop()
+
+# ==========================================
+# 5. ЭКРАН 3: БОЕВАЯ СИСТЕМА
+# ==========================================
+
+# --- СТИЛЬ И ЛОГИКА ---
 def get_base64_of_bin_file(bin_file):
     with open(bin_file, 'rb') as f:
         data = f.read()
@@ -43,12 +166,9 @@ st.markdown(f"""
     
     .stApp {{ background-color: #1a1c19 !important; color: #e0e0e0 !important; font-family: 'Segoe UI', sans-serif; }}
     
-    /* Скрытие меню Streamlit */
-    #MainMenu {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
-    header {{visibility: hidden;}}
+    h1, h2, h3, h4 {{ color: #ffffff !important; text-transform: uppercase; letter-spacing: 1px; }}
+    p, label, span, div {{ color: #e0e0e0 !important; }}
     
-    /* Контейнеры */
     div[data-testid="stContainer"] {{
         background-color: rgba(20, 30, 20, 0.75);
         backdrop-filter: blur(10px);
@@ -58,9 +178,7 @@ st.markdown(f"""
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
     }}
     
-    h1, h2, h3, h4 {{ color: #ffffff !important; text-transform: uppercase; letter-spacing: 1px; }}
-    
-    input, select {{ 
+    input, select, textarea, div[data-testid="stDateInput"] > div {{ 
         background-color: #111 !important; color: #00ff00 !important; border: 1px solid #333 !important; 
     }}
     
@@ -68,48 +186,14 @@ st.markdown(f"""
         background: linear-gradient(0deg, #1b5e20, #2e7d32); 
         color: white !important; 
         border: 1px solid #4caf50; 
-        width: 100%;
+        border-radius: 4px;
+        font-size: 14px;
     }}
+    div[data-testid="stMetricValue"] {{ color: #00ff00 !important; }}
     </style>
     """, unsafe_allow_html=True)
 
-# ==========================================
-# 🚪 СИСТЕМА ВХОДА (LOGIN GATEKEEPER)
-# ==========================================
-if 'authenticated' not in st.session_state:
-    st.session_state.authenticated = False
-if 'user_role' not in st.session_state:
-    st.session_state.user_role = None
-
-def check_login():
-    user = st.session_state["input_user"]
-    pwd = st.session_state["input_pwd"]
-    
-    if user in CREDENTIALS and CREDENTIALS[user] == pwd:
-        st.session_state.authenticated = True
-        st.session_state.user_role = "admin" if user == "admin" else "viewer"
-    else:
-        st.error("⛔ ОШИБКА ДОСТУПА: Неверный логин или пароль")
-
-if not st.session_state.authenticated:
-    # ЭКРАН ВХОДА
-    c1, c2, c3 = st.columns([1, 1, 1])
-    with c2:
-        st.markdown("<br><br><br>", unsafe_allow_html=True)
-        with st.container():
-            if os.path.exists("images/logo.png"):
-                st.image("images/logo.png", width=100)
-            st.title("ВХОД В СИСТЕМУ")
-            st.text_input("Позывной (Логин)", key="input_user")
-            st.text_input("Ключ (Пароль)", type="password", key="input_pwd")
-            st.button("ВОЙТИ", on_click=check_login)
-    st.stop() # ОСТАНАВЛИВАЕТ ЗАГРУЗКУ САЙТА, ПОКА НЕ БУДЕТ ВХОДА
-
-# ==========================================
-# 🚀 ОСНОВНОЕ ПРИЛОЖЕНИЕ (ЗАГРУЖАЕТСЯ ТОЛЬКО ПОСЛЕ ВХОДА)
-# ==========================================
-
-# --- БАЗА ДАННЫХ ---
+# --- ФУНКЦИОНАЛ ---
 def load_data():
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r", encoding="utf-8") as f:
@@ -120,7 +204,6 @@ def save_data():
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(st.session_state.records, f, ensure_ascii=False, indent=4)
 
-# --- СПИСОК ЦЕЛЕЙ ---
 data = [
     {"id": "tank", "name": "Танк", "image": "images/tank.gif", "initial": 350},
     {"id": "sau", "name": "САУ", "image": "images/sau.gif", "initial": 120},
@@ -141,7 +224,6 @@ data = [
     {"id": "shelter", "name": "Укрытия с л/с", "image": "images/shelter.gif", "initial": 100},
 ]
 
-# ЗАГРУЗКА
 if 'records' not in st.session_state:
     loaded_data = load_data()
     st.session_state.records = {item['id']: [] for item in data}
@@ -173,7 +255,7 @@ def filter_records(records, mode):
             if rec_date == today: filtered.append(rec)
     return filtered
 
-# --- ШАПКА ПРИЛОЖЕНИЯ ---
+# --- ИНТЕРФЕЙС ПРИЛОЖЕНИЯ ---
 col_logo, col_title, col_stat = st.columns([1, 5, 2])
 with col_logo:
     if os.path.exists("images/logo.png"):
@@ -186,30 +268,27 @@ with col_title:
     st.title("ОНЛАЙН-ТАБЛО РУССКОГО МИРА")
     st.caption(f"РЕЖИМ ДОСТУПА: {role_text}")
 
-# Кнопка выхода
 with st.sidebar:
-    st.write(f"Пользователь: **{role_text}**")
+    st.write("Меню")
     if st.button("ВЫЙТИ ИЗ СИСТЕМЫ"):
         st.session_state.authenticated = False
+        st.session_state.captcha_passed = False 
         st.session_state.user_role = None
         st.rerun()
 
-# --- ЛОГИКА ВКЛАДОК ---
-# Если Админ - показываем 2 вкладки, иначе только сводку
+# --- ВКЛАДКИ ---
 if st.session_state.user_role == "admin":
     tab_list, tab_add = st.tabs(["📊 СВОДНАЯ ТАБЛИЦА", "➕ ВВОД ДАННЫХ"])
 else:
-    tab_list = st.container() # Просто контейнер, без вкладок
+    tab_list = st.container()
     tab_add = None
 
 # 1. СВОДКА
 with tab_list:
-    # Фильтры
     c_filter, c_void = st.columns([1, 3])
     with c_filter:
         filter_mode = st.selectbox("📅 ПЕРИОД", ["Все время", "2025 год", "Этот месяц", "Последние 7 дней", "Сегодня"])
 
-    # Итого
     grand_total = 0
     for item in data:
         base = item['initial'] if filter_mode == "Все время" else 0
@@ -222,7 +301,6 @@ with tab_list:
 
     st.markdown("---")
     
-    # Карточки
     col_left, col_right = st.columns(2)
     for i, item in enumerate(data):
         current_col = col_left if i % 2 == 0 else col_right
@@ -260,12 +338,10 @@ with tab_list:
                                     if loc_text:
                                         st.text(f"📍 {loc_text}")
                                     
-                                    # Видео
                                     vid_link = rec.get('video_link', '')
                                     if vid_link:
                                         st.markdown(f"[🎥 **СМОТРЕТЬ ВИДЕО (ОК)**]({vid_link})")
 
-                                    # Кнопка удаления ТОЛЬКО ДЛЯ АДМИНА
                                     if st.session_state.user_role == "admin":
                                         if st.button("УДАЛИТЬ", key=f"del_{item['id']}_{rec['time']}_{rec['date']}"):
                                             try:
@@ -276,11 +352,10 @@ with tab_list:
                                                 pass
                                     st.divider()
 
-# 2. ВВОД (Только админ)
+# 2. ВВОД
 if st.session_state.user_role == "admin" and tab_add:
     with tab_add:
         st.subheader("РЕГИСТРАЦИЯ ЦЕЛИ")
-        
         with st.container():
             options = {item["name"]: item["id"] for item in data}
             selected_name = st.selectbox("ВЫБЕРИТЕ ОБЪЕКТ", list(options.keys()), key="select_obj")
