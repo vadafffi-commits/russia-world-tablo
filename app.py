@@ -7,7 +7,7 @@ import json
 # ==========================================
 # 1. ГЛОБАЛЬНЫЕ НАСТРОЙКИ
 # ==========================================
-st.set_page_config(page_title="Магазин 'Уютное Хобби'", page_icon="🧶", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Онлайн-магазин 'Уютное Хобби'", page_icon="🧶", layout="wide", initial_sidebar_state="collapsed")
 
 # 🔐 ДОСТУПЫ
 CREDENTIALS = {
