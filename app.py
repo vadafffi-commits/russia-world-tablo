@@ -51,7 +51,12 @@ def check_login():
 if not st.session_state.captcha_passed:
     st.markdown("""
         <style>
-        .stApp { background-color: #e6e0d4; color: #4a403a; }
+        /* Принудительно красим ВСЕ тексты в темный цвет */
+        .stApp, p, label, div, span, h1, h2, h3, h4 {
+            color: #4a403a !important;
+        }
+        .stApp { background-color: #e6e0d4; }
+        
         #MainMenu, footer, header {visibility: hidden;}
         
         div[data-testid="stVerticalBlock"] > div:has(div.stForm) {
@@ -68,7 +73,7 @@ if not st.session_state.captcha_passed:
         
         div.stButton > button {
             background-color: #bfa5a3; 
-            color: white; border: none; width: 100%;
+            color: white !important; border: none; width: 100%;
             border-radius: 8px; font-size: 18px; padding: 10px;
         }
         div.stButton > button:hover { background-color: #a68b89; }
@@ -76,7 +81,7 @@ if not st.session_state.captcha_passed:
         .shop-nav {
             display: flex; justify-content: space-around; padding: 15px;
             background: #fff; border-bottom: 1px solid #ccc; margin-bottom: 30px;
-            color: #555; font-weight: bold; font-family: Arial;
+            color: #555 !important; font-weight: bold; font-family: Arial;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -127,30 +132,33 @@ if not st.session_state.captcha_passed:
 if not st.session_state.authenticated:
     st.markdown("""
         <style>
-        .stApp { background-color: #e6e0d4; color: #4a403a; }
+        /* ПРИНУДИТЕЛЬНО ЧЕРНЫЙ ТЕКСТ ДЛЯ ВСЕХ ЭЛЕМЕНТОВ НА ЭТОМ ЭКРАНЕ */
+        p, label, span, div, h1, h2, h3, input, div[data-testid="stCheckbox"] p {
+            color: #333333 !important;
+        }
+        
+        .stApp { background-color: #e6e0d4; }
         #MainMenu, footer, header {visibility: hidden;}
         
-        /* Широкий контейнер входа */
         div[data-testid="stVerticalBlock"] > div:has(div.stForm) {
             background-color: #fff; 
             padding: 0px; 
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
-            max-width: 900px; /* ШИРИНА */
+            max-width: 900px;
             margin: auto;
             border: 1px solid #e6d0ce;
-            overflow: hidden; /* Чтобы картинка не вылезала */
+            overflow: hidden;
         }
         
         h1 { color: #c71585 !important; font-family: 'Verdana', sans-serif; font-size: 32px !important; margin-bottom: 20px;}
         
-        /* Яркая кнопка входа */
         div.stButton > button { 
-            background-color: #c71585 !important; /* Насыщенный розовый */
+            background-color: #c71585 !important; 
             color: white !important; 
             border: none; 
             width: 100%; 
-            height: 60px; /* Высокая кнопка */
+            height: 60px;
             font-size: 20px !important; 
             font-weight: bold;
             border-radius: 8px;
@@ -158,7 +166,13 @@ if not st.session_state.authenticated:
         }
         div.stButton > button:hover { background-color: #a0106a !important; }
         
-        /* Стиль для левой колонки (баннера) */
+        /* Поля ввода */
+        input {
+            background-color: #fff !important;
+            color: #000 !important;
+            border: 1px solid #ccc !important;
+        }
+        
         .login-banner {
             background-color: #fae1dd;
             height: 100%;
@@ -168,31 +182,29 @@ if not st.session_state.authenticated:
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            color: #8a4a4a;
+            color: #8a4a4a !important;
         }
+        .login-banner p, .login-banner h3 { color: #8a4a4a !important; }
         </style>
     """, unsafe_allow_html=True)
 
-    # Меню
     st.markdown("""
-        <div style="text-align:center; padding: 20px; font-family: Arial; color: #666; margin-bottom: 20px;">
+        <div style="text-align:center; padding: 20px; font-family: Arial; color: #666 !important; margin-bottom: 20px;">
             Главная &nbsp; > &nbsp; Личный кабинет &nbsp; > &nbsp; <b>Авторизация</b>
         </div>
     """, unsafe_allow_html=True)
 
-    # Используем форму как контейнер
     with st.form("login_form"):
-        # Создаем колонки ВНУТРИ формы для красивой верстки
         c_banner, c_input = st.columns([2, 3])
         
         with c_banner:
             st.markdown("""
                 <div class="login-banner">
                     <div style="font-size: 60px;">🧵</div>
-                    <h2>С возвращением!</h2>
-                    <p>Новые поступления шерсти мериноса уже на складе.</p>
+                    <h3>🎉 SALE</h3>
+                    <p>Скидка 20% на мериносовую шерсть!</p>
                     <br>
-                    <p style="font-size: 12px;">Скидка 15% на первый заказ в приложении</p>
+                    <p style="font-size: 12px;">Промокод: WINTER24</p>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -205,13 +217,12 @@ if not st.session_state.authenticated:
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Галочки
+            # Галочки (теперь будут видны)
             st.checkbox("Запомнить меня")
             st.checkbox("Соглашаюсь на подписку журнала по рукоделию 'Шустрая спица'", value=True)
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Кнопка (она автоматически привязывается к форме)
             st.form_submit_button("ВОЙТИ В АККАУНТ", on_click=check_login)
             
             st.markdown("<div style='text-align:center; margin-top:15px;'><a href='#' style='color:#c71585; text-decoration: none;'>Забыли пароль?</a></div>", unsafe_allow_html=True)
